@@ -9,7 +9,7 @@ import { OPENAI_API_KEY } from "../.env";
 import { URL_PARAM_ENUMS, URL_PARAM_MSGS, EXTERNAL_LINK_ENUMS, EXTERNAL_LINK_MSGS } from "../params/enums";
 import { GPT_MODEL } from "../params/models";
 // Types
-import type { RouterResponseType } from "../types/responseTypes";
+import type { DocRetrieverResponseType } from "../types/responseTypes";
 
 // Instantiate the parser
 const parser = new JsonOutputFunctionsParser();
@@ -60,21 +60,13 @@ const runnable = model
   })
   .pipe(parser);
 
-const run = async (inputValue: string): Promise<RouterResponseType> => {
-  // TODO: optimize the runnable speed
+const run = async (inputValue: string): Promise<DocRetrieverResponseType> => {
   // Run the runnable
   const result = await runnable.invoke([new HumanMessage(inputValue)]);
-  return result;
-
-  /**
-  {
-    result: {
-      url_param: "/apps",
-      external_link: "https://cal.com/download",
-      message: "Going to /apps"
-    }
-  }
-  */
+  return {
+    doc_external_link: result.external_link_enum,
+    text: result.external_link_msg,
+  };
 };
 
 export default run;
