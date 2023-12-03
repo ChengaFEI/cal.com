@@ -1,8 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 
 import runTask from "./runTask";
 
 import { useGetTheme } from "@calcom/lib/hooks/useTheme";
+
+import "./Chatbot.css";
+import router from "./router";
 
 type chatResponse = {
   type: string;
@@ -11,52 +14,13 @@ type chatResponse = {
 
 
 const FloatingIcon = () => {
+  const ref = useRef<HTMLDivElement>(null);
   const [isWindowOpen, setIsWindowOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [chatLog, setChatLog] = useState<chatResponse[]>([]);
   const { resolvedTheme, forcedTheme } = useGetTheme();
+  const { isLoading, setIsLoading } = useState(false);
   const hasDarkTheme = !forcedTheme && resolvedTheme === "dark";
-  const darkThemeColors = {
-    /** Dark Theme starts */
-    //primary - Border when selected and Selected Option background
-    primary: "rgb(41 41 41 / var(--tw-border-opacity))",
-
-    neutral0: "rgb(62 62 62 / var(--tw-bg-opacity))",
-    // Down Arrow  hover color
-    neutral5: "white",
-
-    neutral10: "rgb(41 41 41 / var(--tw-border-opacity))",
-
-    // neutral20 - border color + down arrow default color
-    neutral20: "rgb(41 41 41 / var(--tw-border-opacity))",
-
-    // neutral30 - hover border color
-    neutral30: "rgb(41 41 41 / var(--tw-border-opacity))",
-
-    neutral40: "white",
-
-    danger: "white",
-
-    // Cross button in multiselect
-    dangerLight: "rgb(41 41 41 / var(--tw-border-opacity))",
-
-    // neutral50 - MultiSelect - "Select Text" color
-    neutral50: "white",
-
-    // neutral60 - Down Arrow color
-    neutral60: "white",
-
-    neutral70: "red",
-
-    // neutral80 - Selected option
-    neutral80: "white",
-
-    neutral90: "blue",
-
-    primary50: "rgba(209 , 213, 219, var(--tw-bg-opacity))",
-    primary25: "rgba(244, 245, 246, var(--tw-bg-opacity))",
-    /** Dark Theme ends */
-  };
 
   const toggleWindow = () => {
     setIsWindowOpen(!isWindowOpen);
@@ -65,6 +29,20 @@ const FloatingIcon = () => {
   const handleInputChange = (e: any) => {
     setInputValue(e.target.value);
   };
+
+  const scrollToBottom = () => {
+    if (ref.current) {
+      const scrollHeight = ref.current.scrollHeight;
+      const clientHeight = ref.current.clientHeight;
+      const maxScrollTop = scrollHeight - clientHeight;
+      ref.current.scrollTop = maxScrollTop > 0 ? maxScrollTop : 0;
+    }
+  };
+
+  // Scroll to bottom when the component mounts or when content changes
+  useEffect(() => {
+    scrollToBottom();
+  }, [chatLog]);
 
   const handleConfirmClick = () => {
 
@@ -77,30 +55,41 @@ const FloatingIcon = () => {
     setChatLog([...chatLog, inputValue]);
     runTask(inputValue);
 
+
+    if (inputValue === "") return;
+
     const responses: chatResponse[] = [];
 
     const currentResponse: chatResponse = {
       type: "human",
       message: inputValue,
     };
+    setChatLog([...chatLog, currentResponse]);
+    console.log(ref);
     responses.push(currentResponse);
 
-    // const chatResponse = Promise.resolve(router(inputValue));
+    const chatResponse = Promise.resolve(router(inputValue));
 
-    // chatResponse.then((value) => {
-    //   console.log("Response: ", value);
+    chatResponse.then((value) => {
+      console.log("Response: ", value);
 
-    //   const aiResponse: chatResponse = {
-    //     type: "aiResponse",
-    //     message: value.url_param,
-    //   };
+      const aiResponse: chatResponse = {
+        type: "aiResponse",
+        message: value.url_param,
+      };
 
-    //   responses.push(aiResponse);
-    //   setChatLog([...chatLog, ...responses]);
-    // });
-    setChatLog([...chatLog, ...responses]);
+      responses.push(aiResponse);
+      setChatLog([...chatLog, ...responses]);
+    });
+    // setChatLog([...chatLog, ...responses]);
     setInputValue("");
 
+  };
+
+  const handleKeyDown = (event: any) => {
+    if (event.key === "Enter" && inputValue !== "") {
+      handleConfirmClick();
+    }
   };
 
   const handleWindowClick = (e: any) => {
@@ -113,9 +102,8 @@ const FloatingIcon = () => {
       <div
         key={val.message}
         style={{
-          color: "white",
           width: "fit-content",
-          border: "1px solid white",
+          border: hasDarkTheme ? "2px solid white" : "2px solid black",
           margin: "1rem 0 1rem 0",
           borderRadius: "30px",
           padding: "0.5rem 1rem",
@@ -129,9 +117,8 @@ const FloatingIcon = () => {
         style={{ width: "100%", display: "flex", justifyContent: "flex-end", margin: "1rem 0 1rem 0" }}>
         <div
           style={{
-            color: "white",
             width: "fit-content",
-            border: "1px solid white",
+            border: hasDarkTheme ? "2px solid white" : "2px solid black",
 
             borderRadius: "30px",
             padding: "0.5rem 1rem",
@@ -153,66 +140,58 @@ const FloatingIcon = () => {
         zIndex: 1000,
       }}
       onClick={toggleWindow}>
-      <div
-        style={{
-          backgroundColor: isWindowOpen ? "#ff6347" : "#007bff",
-          color: hasDarkTheme ? "#000" : "#fff",
-          borderRadius: "50%",
-          width: "40px",
-          height: "40px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontSize: "20px",
-          boxShadow: "0 2px 10px rgba(0, 0, 0, 0.2)",
-          transition: "background-color 0.3s ease",
-        }}>
-        &#x263C;
-      </div>
       {isWindowOpen && (
         <div
           style={{
-            position: "absolute",
-            bottom: "60px",
+            bottom: "10rem",
             right: "0",
             border: "1px solid #ccc",
-            borderRadius: "8px",
-            padding: "10px",
-            backgroundColor: "#000",
+            borderRadius: "50px",
+            padding: "20px",
+            backgroundColor: hasDarkTheme ? "#000" : "#fff",
             boxShadow: "0 2px 10px rgba(0, 0, 0, 0.2)",
             display: "block",
+            position: "fixed",
+            right: "20px",
+            bottom: "8rem",
           }}
           onClick={handleWindowClick} // Handle click within the window
         >
-          <div style={{ height: "80vh", width: "20rem" }}>
+          <div style={{ height: "60vh", width: "30vw", position: "relative" }}>
             <div
+              ref={ref}
               style={{
-                height: "100%",
+                height: "90%",
                 overflow: "scroll",
                 paddingBottom: "5rem",
-              }}>
+              }}
+              className="chatblock">
               {renderChatLog}
             </div>
-            <div style={{ width: "20rem", position: "absolute", bottom: "0", marginBottom: "10px" }}>
+            <div style={{ width: "100%", position: "absolute", bottom: "0", marginBottom: "10px" }}>
               <input
                 type="text"
                 value={inputValue}
                 onChange={handleInputChange}
                 placeholder="Enter text..."
                 style={{
-                  color: "white",
-                  background: "black",
-                  border: "2px solid white",
+                  color: hasDarkTheme
+                    ? "whitevscode-file://vscode-app/usr/share/code/resources/app/out/vs/code/electron-sandbox/workbench/workbench.html"
+                    : "black",
+                  background: hasDarkTheme ? "black" : "white",
+                  border: hasDarkTheme ? "1px solid white" : "1px solid black",
                   borderRadius: "50px",
                   padding: "1rem 4rem 1rem 2rem",
                   width: "100%",
                 }}
+                onKeyDown={handleKeyDown}
               />
               <button
+                className="chatbot-button"
                 onClick={handleConfirmClick}
                 style={{
-                  color: "black",
-                  background: "white",
+                  color: hasDarkTheme ? "black" : "white",
+                  background: hasDarkTheme ? "white" : "black",
                   borderRadius: "50px",
                   aspectRatio: "1",
                   height: "80%",
@@ -222,6 +201,7 @@ const FloatingIcon = () => {
                   display: "flex",
                   justifyContent: "center",
                   alignItems: "center",
+                  fontSize: "1.5rem",
                 }}>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -243,6 +223,36 @@ const FloatingIcon = () => {
           </div>
         </div>
       )}
+      <div
+        className="chatbot-button"
+        style={{
+          backgroundColor:
+            (!isWindowOpen && hasDarkTheme) || (isWindowOpen && !hasDarkTheme) ? "white" : "black",
+          borderRadius: "50%",
+          width: "5rem",
+          height: "5rem",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: "20px",
+          boxShadow: "0 2px 10px rgba(0, 0, 0, 0.2)",
+          transition: "background-color 0.3s ease",
+          position: "absolute",
+          right: "20px",
+          bottom: "20px",
+        }}>
+        {/* <!--!Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2023 Fonticons, Inc.--> */}
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          height="3rem"
+          width="3.2rem"
+          viewBox="0 0 640 512"
+          style={{
+            fill: (hasDarkTheme && !isWindowOpen) || (isWindowOpen && !hasDarkTheme) ? "black" : "white",
+          }}>
+          <path d="M320 0c17.7 0 32 14.3 32 32V96H472c39.8 0 72 32.2 72 72V440c0 39.8-32.2 72-72 72H168c-39.8 0-72-32.2-72-72V168c0-39.8 32.2-72 72-72H288V32c0-17.7 14.3-32 32-32zM208 384c-8.8 0-16 7.2-16 16s7.2 16 16 16h32c8.8 0 16-7.2 16-16s-7.2-16-16-16H208zm96 0c-8.8 0-16 7.2-16 16s7.2 16 16 16h32c8.8 0 16-7.2 16-16s-7.2-16-16-16H304zm96 0c-8.8 0-16 7.2-16 16s7.2 16 16 16h32c8.8 0 16-7.2 16-16s-7.2-16-16-16H400zM264 256a40 40 0 1 0 -80 0 40 40 0 1 0 80 0zm152 40a40 40 0 1 0 0-80 40 40 0 1 0 0 80zM48 224H64V416H48c-26.5 0-48-21.5-48-48V272c0-26.5 21.5-48 48-48zm544 0c26.5 0 48 21.5 48 48v96c0 26.5-21.5 48-48 48H576V224h16z" />
+        </svg>
+      </div>
     </div>
   );
 };
