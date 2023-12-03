@@ -2,10 +2,61 @@ import React, { useState } from "react";
 
 import runTask from "./runTask";
 
+import { useGetTheme } from "@calcom/lib/hooks/useTheme";
+
+type chatResponse = {
+  type: string;
+  message: string;
+};
+
+
 const FloatingIcon = () => {
   const [isWindowOpen, setIsWindowOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
-  const [chatLog, setChatLog] = useState<string[]>([]);
+  const [chatLog, setChatLog] = useState<chatResponse[]>([]);
+  const { resolvedTheme, forcedTheme } = useGetTheme();
+  const hasDarkTheme = !forcedTheme && resolvedTheme === "dark";
+  const darkThemeColors = {
+    /** Dark Theme starts */
+    //primary - Border when selected and Selected Option background
+    primary: "rgb(41 41 41 / var(--tw-border-opacity))",
+
+    neutral0: "rgb(62 62 62 / var(--tw-bg-opacity))",
+    // Down Arrow  hover color
+    neutral5: "white",
+
+    neutral10: "rgb(41 41 41 / var(--tw-border-opacity))",
+
+    // neutral20 - border color + down arrow default color
+    neutral20: "rgb(41 41 41 / var(--tw-border-opacity))",
+
+    // neutral30 - hover border color
+    neutral30: "rgb(41 41 41 / var(--tw-border-opacity))",
+
+    neutral40: "white",
+
+    danger: "white",
+
+    // Cross button in multiselect
+    dangerLight: "rgb(41 41 41 / var(--tw-border-opacity))",
+
+    // neutral50 - MultiSelect - "Select Text" color
+    neutral50: "white",
+
+    // neutral60 - Down Arrow color
+    neutral60: "white",
+
+    neutral70: "red",
+
+    // neutral80 - Selected option
+    neutral80: "white",
+
+    neutral90: "blue",
+
+    primary50: "rgba(209 , 213, 219, var(--tw-bg-opacity))",
+    primary25: "rgba(244, 245, 246, var(--tw-bg-opacity))",
+    /** Dark Theme ends */
+  };
 
   const toggleWindow = () => {
     setIsWindowOpen(!isWindowOpen);
@@ -16,6 +67,7 @@ const FloatingIcon = () => {
   };
 
   const handleConfirmClick = () => {
+
     // Handle the confirm button click, you can add your logic here
     // console.log("Input Value:", inputValue);
     // Close the window after confirming (optional)
@@ -24,6 +76,31 @@ const FloatingIcon = () => {
     // Update the chatLog state with the new entry
     setChatLog([...chatLog, inputValue]);
     runTask(inputValue);
+
+    const responses: chatResponse[] = [];
+
+    const currentResponse: chatResponse = {
+      type: "human",
+      message: inputValue,
+    };
+    responses.push(currentResponse);
+
+    // const chatResponse = Promise.resolve(router(inputValue));
+
+    // chatResponse.then((value) => {
+    //   console.log("Response: ", value);
+
+    //   const aiResponse: chatResponse = {
+    //     type: "aiResponse",
+    //     message: value.url_param,
+    //   };
+
+    //   responses.push(aiResponse);
+    //   setChatLog([...chatLog, ...responses]);
+    // });
+    setChatLog([...chatLog, ...responses]);
+    setInputValue("");
+
   };
 
   const handleWindowClick = (e: any) => {
@@ -31,11 +108,12 @@ const FloatingIcon = () => {
     e.stopPropagation();
   };
 
-  const renderChatLog = chatLog.map((val, idx) => {
-    return (
+  const renderChatLog = chatLog.map((val) => {
+    return val.type === "aiResponse" ? (
       <div
-        key={idx}
+        key={val.message}
         style={{
+          color: "white",
           width: "fit-content",
           border: "1px solid white",
           margin: "1rem 0 1rem 0",
@@ -43,7 +121,24 @@ const FloatingIcon = () => {
           padding: "0.5rem 1rem",
           maxWidth: "80%",
         }}>
-        {val}
+        {val.message}
+      </div>
+    ) : (
+      <div
+        key={val.message}
+        style={{ width: "100%", display: "flex", justifyContent: "flex-end", margin: "1rem 0 1rem 0" }}>
+        <div
+          style={{
+            color: "white",
+            width: "fit-content",
+            border: "1px solid white",
+
+            borderRadius: "30px",
+            padding: "0.5rem 1rem",
+            maxWidth: "80%",
+          }}>
+          {val.message}
+        </div>
       </div>
     );
   });
@@ -61,7 +156,7 @@ const FloatingIcon = () => {
       <div
         style={{
           backgroundColor: isWindowOpen ? "#ff6347" : "#007bff",
-          color: "#000",
+          color: hasDarkTheme ? "#000" : "#fff",
           borderRadius: "50%",
           width: "40px",
           height: "40px",
@@ -89,8 +184,15 @@ const FloatingIcon = () => {
           }}
           onClick={handleWindowClick} // Handle click within the window
         >
-          <div style={{ height: "20rem", width: "20rem" }}>
-            <div>{renderChatLog}</div>
+          <div style={{ height: "80vh", width: "20rem" }}>
+            <div
+              style={{
+                height: "100%",
+                overflow: "scroll",
+                paddingBottom: "5rem",
+              }}>
+              {renderChatLog}
+            </div>
             <div style={{ width: "20rem", position: "absolute", bottom: "0", marginBottom: "10px" }}>
               <input
                 type="text"
@@ -98,10 +200,11 @@ const FloatingIcon = () => {
                 onChange={handleInputChange}
                 placeholder="Enter text..."
                 style={{
+                  color: "white",
                   background: "black",
                   border: "2px solid white",
                   borderRadius: "50px",
-                  padding: "1rem 2rem",
+                  padding: "1rem 4rem 1rem 2rem",
                   width: "100%",
                 }}
               />
