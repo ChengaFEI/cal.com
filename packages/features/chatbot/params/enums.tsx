@@ -3,7 +3,7 @@ export const other = "None";
 export const URL_PARAM_ENUMS: string[] = [
   "/apps",
   "/apps/routing-forms/forms",
-  "/auth/setup?step=1",
+  // "/auth/setup?step=1",
   "/availability",
   "/bookings/upcoming",
   "/bookings/recurring",

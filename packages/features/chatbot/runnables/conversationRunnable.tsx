@@ -31,20 +31,6 @@ const model = new ChatOpenAI({
   temperature: 0,
 });
 
-// Component 3: prompt template
-const prompt =
-  PromptTemplate.fromTemplate(`The following is a friendly conversation between a human and an AI. The AI is talkative and provides lots of specific details from its context. If the AI does not know the answer to a question, it truthfully says it does not know.
-
-  You have the following context: {context}
-
-  Current conversation:
-  {chat_history}
-  Human: {input}
-  AI:`);
-
-// Component 4: model chain
-const chain = new LLMChain({ llm: model, prompt, memory });
-
 const run = async (inputValue: string): Promise<ConversationResponseType> => {
   const vectorStore = await MemoryVectorStore.fromTexts(
     docContents,
@@ -55,11 +41,26 @@ const run = async (inputValue: string): Promise<ConversationResponseType> => {
   );
 
   const document = await vectorStore.similaritySearch(inputValue, 1);
-  const documentID = document[0].metadata.id;
-  const ducumentContent = document[0].pageContent;
+  const documentContent = document[0].pageContent;
+  await memory.saveContext(
+    { input: `Please read the following article: ${documentContent}` },
+    { output: "Yes thank you for the given input, I have read throught the article" }
+  );
+  // Component 3: prompt template
+  const prompt =
+    PromptTemplate.fromTemplate(`The following is a friendly conversation between a human and an AI. The AI is talkative and provides lots of specific details from its context. If the AI does not know the answer to a question, it truthfully says it does not know.
+
+    \n\nCurrent conversation:
+    {chat_history}
+    Human: {input}
+    AI:`);
+
+  // Component 4: model chain
+  const chain = new LLMChain({ llm: model, prompt, memory });
+
+  // TODO: this method only receives one argument, not two
   const result = await chain.call({
     input: inputValue,
-    context: ducumentContent,
   });
   return result;
 };
