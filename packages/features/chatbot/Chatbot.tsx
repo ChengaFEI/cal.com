@@ -2,8 +2,6 @@ import React, { useState } from "react";
 
 import { useGetTheme } from "@calcom/lib/hooks/useTheme";
 
-import router from "./router";
-
 type chatResponse = {
   type: string;
   message: string;
@@ -74,19 +72,21 @@ const FloatingIcon = () => {
     };
     responses.push(currentResponse);
 
-    const chatResponse = Promise.resolve(router(inputValue));
+    // const chatResponse = Promise.resolve(router(inputValue));
 
-    chatResponse.then((value) => {
-      console.log("Response: ", value);
+    // chatResponse.then((value) => {
+    //   console.log("Response: ", value);
 
-      const aiResponse: chatResponse = {
-        type: "aiResponse",
-        message: value.url_param,
-      };
+    //   const aiResponse: chatResponse = {
+    //     type: "aiResponse",
+    //     message: value.url_param,
+    //   };
 
-      responses.push(aiResponse);
-      setChatLog([...chatLog, ...responses]);
-    });
+    //   responses.push(aiResponse);
+    //   setChatLog([...chatLog, ...responses]);
+    // });
+    setChatLog([...chatLog, ...responses]);
+    setInputValue("");
   };
 
   const handleWindowClick = (e: any) => {
@@ -142,7 +142,7 @@ const FloatingIcon = () => {
       <div
         style={{
           backgroundColor: isWindowOpen ? "#ff6347" : "#007bff",
-          color: "#000",
+          color: hasDarkTheme ? "#000" : "#fff",
           borderRadius: "50%",
           width: "40px",
           height: "40px",
@@ -170,8 +170,15 @@ const FloatingIcon = () => {
           }}
           onClick={handleWindowClick} // Handle click within the window
         >
-          <div style={{ height: "20rem", width: "20rem" }}>
-            <div>{renderChatLog}</div>
+          <div style={{ height: "80vh", width: "20rem" }}>
+            <div
+              style={{
+                height: "100%",
+                overflow: "scroll",
+                paddingBottom: "5rem",
+              }}>
+              {renderChatLog}
+            </div>
             <div style={{ width: "20rem", position: "absolute", bottom: "0", marginBottom: "10px" }}>
               <input
                 type="text"
@@ -183,7 +190,7 @@ const FloatingIcon = () => {
                   background: "black",
                   border: "2px solid white",
                   borderRadius: "50px",
-                  padding: "1rem 2rem",
+                  padding: "1rem 4rem 1rem 2rem",
                   width: "100%",
                 }}
               />
