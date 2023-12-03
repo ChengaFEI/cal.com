@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 
+import runTask from "./runTask";
+
 import { useGetTheme } from "@calcom/lib/hooks/useTheme";
 
 import "./Chatbot.css";
@@ -9,6 +11,7 @@ type chatResponse = {
   type: string;
   message: string;
 };
+
 
 const FloatingIcon = () => {
   const ref = useRef<HTMLDivElement>(null);
@@ -42,7 +45,19 @@ const FloatingIcon = () => {
   }, [chatLog]);
 
   const handleConfirmClick = () => {
+
+    // Handle the confirm button click, you can add your logic here
+    // console.log("Input Value:", inputValue);
+    // Close the window after confirming (optional)
+    // setIsWindowOpen(false);
+
+    // Update the chatLog state with the new entry
+    setChatLog([...chatLog, inputValue]);
+    runTask(inputValue);
+
+
     if (inputValue === "") return;
+
     const responses: chatResponse[] = [];
 
     const currentResponse: chatResponse = {
@@ -68,6 +83,7 @@ const FloatingIcon = () => {
     });
     // setChatLog([...chatLog, ...responses]);
     setInputValue("");
+
   };
 
   const handleKeyDown = (event: any) => {
