@@ -66,27 +66,27 @@ const FloatingIcon = () => {
   };
 
   const handleConfirmClick = () => {
-    // Handle the confirm button click, you can add your logic here
-    // console.log("Input Value:", inputValue);
-    // Close the window after confirming (optional)
-    // setIsWindowOpen(false);
+    const responses: chatResponse[] = [];
+
     const currentResponse: chatResponse = {
       type: "human",
       message: inputValue,
     };
+    responses.push(currentResponse);
 
-    // Update the chatLog state with the new entry
-    setChatLog([...chatLog, currentResponse]);
-    setInputValue("");
+    const chatResponse = Promise.resolve(router(inputValue));
 
-    const aiChatLog = router(inputValue);
+    chatResponse.then((value) => {
+      console.log("Response: ", value);
 
-    const aiResponse: chatResponse = {
-      type: "aiResponse",
-      message: aiChatLog.result.chat_response,
-    };
+      const aiResponse: chatResponse = {
+        type: "aiResponse",
+        message: value.url_param,
+      };
 
-    setChatLog([...chatLog, aiResponse]);
+      responses.push(aiResponse);
+      setChatLog([...chatLog, ...responses]);
+    });
   };
 
   const handleWindowClick = (e: any) => {
@@ -95,23 +95,11 @@ const FloatingIcon = () => {
   };
 
   const renderChatLog = chatLog.map((val) => {
-    return <div
-      key={val.message}
-      style={{
-        width: "fit-content",
-        border: "1px solid white",
-        margin: "1rem 0 1rem 0",
-        borderRadius: "30px",
-        padding: "0.5rem 1rem",
-        maxWidth: "80%",
-      }}>
-      {val.message}
-    </div> ? (
-      val.type === "aiResponse"
-    ) : (
+    return val.type === "aiResponse" ? (
       <div
         key={val.message}
         style={{
+          color: "white",
           width: "fit-content",
           border: "1px solid white",
           margin: "1rem 0 1rem 0",
@@ -120,6 +108,23 @@ const FloatingIcon = () => {
           maxWidth: "80%",
         }}>
         {val.message}
+      </div>
+    ) : (
+      <div
+        key={val.message}
+        style={{ width: "100%", display: "flex", justifyContent: "flex-end", margin: "1rem 0 1rem 0" }}>
+        <div
+          style={{
+            color: "white",
+            width: "fit-content",
+            border: "1px solid white",
+
+            borderRadius: "30px",
+            padding: "0.5rem 1rem",
+            maxWidth: "80%",
+          }}>
+          {val.message}
+        </div>
       </div>
     );
   });
@@ -174,6 +179,7 @@ const FloatingIcon = () => {
                 onChange={handleInputChange}
                 placeholder="Enter text..."
                 style={{
+                  color: "white",
                   background: "black",
                   border: "2px solid white",
                   borderRadius: "50px",
