@@ -2,6 +2,7 @@ export type TaskResponseType = {
   url_param: string;
   external_link: string;
   message: string;
+  retriever: string;
 };
 
 export type RouterResponseType = {
@@ -12,5 +13,9 @@ export type RouterResponseType = {
 };
 
 export type ConversationResponseType = {
+  text: string;
+};
+
+export type DocRetrieverResponseType = {
   text: string;
 };

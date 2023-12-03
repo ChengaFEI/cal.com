@@ -1,8 +1,14 @@
-import type { ConversationResponseType, RouterResponseType, TaskResponseType } from "../types/responseTypes";
+import type {
+  ConversationResponseType,
+  RouterResponseType,
+  TaskResponseType,
+  DocRetrieverResponseType,
+} from "../types/responseTypes";
 
 const map = (
   routerResponse: RouterResponseType,
-  conversationResponse: ConversationResponseType
+  conversationResponse: ConversationResponseType,
+  docRetrieverResponse: DocRetrieverResponseType
 ): TaskResponseType => {
   // Step 1: parse the response and route results accordingly
   const url_param_enum = routerResponse.url_param_enum;
@@ -12,6 +18,7 @@ const map = (
   const taskResponse = {
     url_param: url_param_enum,
     external_link: external_link_enum,
+    retriever: "",
     message: "",
   };
   // Case 1: url parser succeeded, append the url param message
@@ -26,6 +33,7 @@ const map = (
   if (url_param_enum === "None" && external_link_enum === "None") {
     taskResponse.message = conversationResponse.text;
   }
+  taskResponse.retriever = docRetrieverResponse.text;
   return taskResponse;
 };
 
