@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 
+import router from "./router";
+
 const FloatingIcon = () => {
   const [isWindowOpen, setIsWindowOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
@@ -15,12 +17,13 @@ const FloatingIcon = () => {
 
   const handleConfirmClick = () => {
     // Handle the confirm button click, you can add your logic here
-    console.log("Input Value:", inputValue);
+    // console.log("Input Value:", inputValue);
     // Close the window after confirming (optional)
     // setIsWindowOpen(false);
 
     // Update the chatLog state with the new entry
     setChatLog([...chatLog, inputValue]);
+    router(inputValue);
   };
 
   const handleWindowClick = (e: any) => {
