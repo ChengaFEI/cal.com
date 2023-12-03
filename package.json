@@ -105,7 +105,9 @@
   "dependencies": {
     "city-timezones": "^1.2.1",
     "eslint": "^8.34.0",
+    "faiss-node": "^0.5.1",
     "lucide-react": "^0.171.0",
+    "pickleparser": "^0.2.1",
     "turbo": "^1.10.1"
   },
   "resolutions": {

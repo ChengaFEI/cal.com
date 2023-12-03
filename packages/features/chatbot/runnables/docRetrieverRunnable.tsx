@@ -1,72 +1,89 @@
 // LangChain APIs
+import { LLMChain } from "langchain/chains";
 import { ChatOpenAI } from "langchain/chat_models/openai";
-import { JsonOutputFunctionsParser } from "langchain/output_parsers";
-import { HumanMessage } from "langchain/schema";
+import { OpenAIEmbeddings } from "langchain/embeddings/openai";
+import {
+  ChatPromptTemplate,
+  HumanMessagePromptTemplate,
+  SystemMessagePromptTemplate,
+} from "langchain/prompts";
+import { MemoryVectorStore } from "langchain/vectorstores/memory";
 
 // Environment variables
 import { OPENAI_API_KEY } from "../.env";
-// Parameters
-import { URL_PARAM_ENUMS, URL_PARAM_MSGS, EXTERNAL_LINK_ENUMS, EXTERNAL_LINK_MSGS } from "../params/enums";
+// Documents
+import { docContents, docIndex } from "../docs/docs";
 import { GPT_MODEL } from "../params/models";
 // Types
 import type { DocRetrieverResponseType } from "../types/responseTypes";
 
-// Instantiate the parser
-const parser = new JsonOutputFunctionsParser();
-
-// Define the function schema
-const extractionFunctionSchema = {
-  name: "extractor",
-  description: "Extracts fields from the input.",
-  parameters: {
-    type: "object",
-    properties: {
-      url_param_enum: {
-        type: "string",
-        enum: URL_PARAM_ENUMS,
-        description: "The URL parameter to extract.",
-      },
-      url_param_msg: {
-        type: "string",
-        enum: URL_PARAM_MSGS,
-        description: "The message about rerouting to the webpage which is sent to the user.",
-      },
-      external_link_enum: {
-        type: "string",
-        enum: EXTERNAL_LINK_ENUMS,
-        description: "The external link to extract.",
-      },
-      external_link_msg: {
-        type: "string",
-        enum: EXTERNAL_LINK_MSGS,
-        description: "The message about rerouting to the external link which is sent to the user.",
-      },
-    },
-    required: ["url_param_enum", "url_param_msg", "external_link_enum", "external_link_msg"],
-  },
-};
-
-// Instantiate the ChatOpenAI class
-const model = new ChatOpenAI({
-  modelName: GPT_MODEL,
-  openAIApiKey: OPENAI_API_KEY,
-});
-
-// Create a new runnable, bind the function to the model, and pipe the output through the parser
-const runnable = model
-  .bind({
-    functions: [extractionFunctionSchema],
-    function_call: { name: "extractor" },
-  })
-  .pipe(parser);
-
 const run = async (inputValue: string): Promise<DocRetrieverResponseType> => {
-  // Run the runnable
-  const result = await runnable.invoke([new HumanMessage(inputValue)]);
+  const vectorStore = await MemoryVectorStore.fromTexts(
+    docContents,
+    docIndex,
+    new OpenAIEmbeddings({
+      openAIApiKey: OPENAI_API_KEY,
+    })
+  );
+
+  const document = await vectorStore.similaritySearch(inputValue, 1);
+  const documentID = document[0].metadata.id;
+  const ducumentContent = document[0].pageContent;
+
+  // create template
+  const template = "You are a professional about Cal.com. Please read the following document: {document}";
+
+  const systemMessagePrompt = SystemMessagePromptTemplate.fromTemplate(template);
+
+  const humanTemplate = "{question}";
+  const humanMessagePrompt = HumanMessagePromptTemplate.fromTemplate(humanTemplate);
+
+  const chatPrompt = ChatPromptTemplate.fromMessages([systemMessagePrompt, humanMessagePrompt]);
+
+  const model = new ChatOpenAI({
+    modelName: GPT_MODEL,
+    openAIApiKey: OPENAI_API_KEY,
+  });
+
+  const chain = new LLMChain({
+    llm: model,
+    prompt: chatPrompt,
+  });
+
+  const result = await chain.call({
+    document: ducumentContent,
+    question: inputValue,
+  });
+
+  console.log(result.text);
+  console.log(document);
+
+  // const prompt = new PromptTemplate({
+  //   inputVariables: ["document", "question"],
+  //   template: template, // your template without external input
+  // });
+
+  // const res = await prompt.format({
+  //   document: ducumentContent,
+  //   question: inputValue,
+  // });
+
+  // // feed the chatbot
+  // model.call();
+
   return {
-    doc_external_link: result.external_link_enum,
-    text: result.external_link_msg,
+    doc_external_link: documentID,
+    text: result.text,
   };
+
+  /*
+    [
+      Document {
+        pageContent: "Hello world",
+        metadata: { id: 2 }
+      }
+    ]
+  */
 };
 
 export default run;
